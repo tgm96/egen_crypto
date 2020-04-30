@@ -119,6 +119,7 @@ def encrypt_message(message, e_string, encrypt_key, key):
 
     ret_string = convertToHex(ret_string)
 
+    # the reason the line is commented out, is because I haven't found a way to implement yet
     # ret_string = adding(ret_string)
 
     print("your message has been encrypted and put in the file: ciphertext.txt")
