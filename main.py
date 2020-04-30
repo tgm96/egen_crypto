@@ -1,4 +1,4 @@
-import random
+import random, math
 import trans_cipher, trans_cipher_decr
 import sys
 
@@ -38,6 +38,27 @@ def convertToHex(ciphertext):
 
 def convertFromHex(ciphertext):
     return bytearray.fromhex(ciphertext).decode()
+
+def adding(ciphertext):
+    content = list(ciphertext)
+    content = [int(n) for n in content]
+
+    num_key = []
+
+    for i in content:
+        num_key.append(random.randint(0, i))
+
+    ret_nums = []
+
+    for j in range(len(num_key)):
+        num = content[j] + num_key[j]
+        if num >= 10:
+            num = content[j] - num_key[j]
+    
+    ret_nums.append(num)
+
+    return "".join(ret_nums)
+
 
 def generate_estring():
     L_symbols = list(SYMBOLS)
@@ -98,6 +119,8 @@ def encrypt_message(message, e_string, encrypt_key, key):
 
     ret_string = convertToHex(ret_string)
 
+    # ret_string = adding(ret_string)
+
     print("your message has been encrypted and put in the file: ciphertext.txt")
     with open("ciphertext.txt", "w") as f:
         f.write(ret_string)
@@ -157,7 +180,10 @@ def main(mode, message, key):
         else:
             e_string = generate_estring()
             e_string = convertFromHex(e_string)
+
+        
         encrypt_key = list(e_string)
+        
         ciphertext = encrypt_message(message, e_string, encrypt_key, key)
 
         print("------------------------")
