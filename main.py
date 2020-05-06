@@ -1,5 +1,4 @@
 import random, math
-import trans_cipher, trans_cipher_decr
 import sys
 
 
@@ -7,7 +6,7 @@ SYMBOLS = """ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!"*@^
 
 
 while True:
-    print("enter your mode here (encrypt/decrypt")
+    print("enter your mode here (encrypt/decrypt)")
     mode = input("> ")
     if mode == "encrypt" or mode == "decrypt":
         break
@@ -26,6 +25,41 @@ myMode = mode
 print("enter the plaintext or ciphertext here:")
 myMessage = input("> ")
 
+def transDecryptMessage(key, message):
+
+    numOfColumns = math.ceil(len(message) / key)
+    numOfRows = key
+    numOfShadeBoxes = (numOfColumns * numOfRows) - len(message)
+
+    plaintext = [""] * numOfColumns
+
+    col = 0
+    row = 0
+
+    for symbol in message:
+        plaintext[col] += symbol
+        col += 1
+
+        if (col == numOfColumns) or (col == numOfColumns - 1 and row >= numOfRows - numOfShadeBoxes):
+            col = 0
+            row += 1
+
+    return "".join(plaintext)
+
+def transEncryptMessage(key, message):
+
+    ciphertext = [""] * key
+
+    for col in range(key):
+        pointer = col
+
+        while pointer < len(message):
+            ciphertext[col] += message[pointer]
+
+            pointer += key
+
+    return "".join(ciphertext)
+
 def convertToHex(ciphertext):
     unic = [ord(let) for let in ciphertext]
 
@@ -39,7 +73,7 @@ def convertToHex(ciphertext):
 def convertFromHex(ciphertext):
     return bytearray.fromhex(ciphertext).decode()
 
-def adding(ciphertext):
+def adding(ciphertext, filename):
     content = list(ciphertext)
     content = [int(n) for n in content]
 
@@ -51,16 +85,41 @@ def adding(ciphertext):
     ret_nums = []
 
     for j in range(len(num_key)):
-        num = content[j] + num_key[j]
-        if num >= 10:
+        if content[j] + num_key[j] < 10:
+            num = content[j] + num_key[j]
+        else:
             num = content[j] - num_key[j]
     
-    ret_nums.append(num)
+        ret_nums.append(str(num))
+
+    num_key = [str(a) for a in num_key]
+    num_key = "".join(num_key)
+
+    with open(filename + ".txt", "a") as f:
+        f.write("\n---------------------------")
+        f.write("\n" + num_key)
 
     return "".join(ret_nums)
 
+def subtract(ciphertext, num_key):
+    content = list(ciphertext)
+    content = [int(n) for n in content]
 
-def generate_estring():
+    ret_nums = []
+
+    for j in range(len(num_key)):
+        if (content[j] - num_key[j]) > 0:
+            num = content[j] - num_key[j]
+        else:
+            num = content[j] + num_key[j]
+    
+        ret_nums.append(str(num))
+
+    #print("".join(ret_nums))
+    #sys.exit()
+    return "".join(ret_nums)
+
+def generate_estring(filename):
     L_symbols = list(SYMBOLS)
 
     encrypt_key = []
@@ -77,9 +136,6 @@ def generate_estring():
 
     e_string = convertToHex(e_string)
 
-    print("what should e_string file be called?")
-    filename = input("> ")
-
     with open(filename + ".txt", "w") as f:
         f.write(e_string)
 
@@ -91,7 +147,7 @@ def generate_estring():
 
     return e_string
 
-def encrypt_message(message, e_string, encrypt_key, key):
+def encrypt_message(message, e_string, encrypt_key, key, filename):
 
     ret_string = ""
 
@@ -109,18 +165,14 @@ def encrypt_message(message, e_string, encrypt_key, key):
             ret_string = ret_string + encrypt_key[num]
 
     if key < len(ret_string) / 2:
-        ret_string = trans_cipher.encryptMessage(key, ret_string)
+        ret_string = transEncryptMessage(key, ret_string)
     else:
-        ret_string = trans_cipher.encryptMessage(3, ret_string)
+        ret_string = transEncryptMessage(3, ret_string)
 
     ret_string = convertToHex(ret_string)
-
-    ret_string = trans_cipher.encryptMessage(3, ret_string)
-
+    ret_string = transEncryptMessage(3, ret_string)
     ret_string = convertToHex(ret_string)
-
-    # the reason the line is commented out, is because I haven't found a way to implement yet
-    # ret_string = adding(ret_string)
+    # ret_string = adding(ret_string, filename)
 
     print("your message has been encrypted and put in the file: ciphertext.txt")
     with open("ciphertext.txt", "w") as f:
@@ -129,23 +181,27 @@ def encrypt_message(message, e_string, encrypt_key, key):
     return "encrypted message: >" + ret_string + "<"
 
 def decrypt_message(key, message, filename):
-
-    message = convertFromHex(message)
-
-    message = trans_cipher_decr.decryptMessage(3, message)
-
-    message = convertFromHex(message)
-
     string_file = open(filename + ".txt", "r")
     e_string = string_file.read()
     string_file.close()
 
-    e_string = convertFromHex(e_string)
+    e_string = e_string.split()
+
+    # num_key = e_string[-1]
+    # num_key = [int(n) for n in num_key]
+
+    # ret_nums = subtract(message, num_key)
+
+    e_string = convertFromHex(e_string[0])
+
+    message = convertFromHex(message)
+    message = transDecryptMessage(3, message)
+    message = convertFromHex(message)
 
     if key < len(message) / 2:
-        message = trans_cipher_decr.decryptMessage(key, message)
+        message = transDecryptMessage(key, message)
     else:
-        message = trans_cipher_decr.decryptMessage(3, message)
+        message = transDecryptMessage(3, message)
 
     ret_string = ""
 
@@ -174,18 +230,21 @@ def main(mode, message, key):
         prompt = input("> ")
         if prompt == "y":
             print("enter the name of the e_string file, excluding .txt")
-            usr_ans = input("> ")
-            with open(usr_ans + ".txt", "r") as f:
+            filename = input("> ")
+            with open(filename + ".txt", "r") as f:
                 e_string = f.read()
-                e_string = convertFromHex(e_string)
+                e_string = e_string.split()
+                e_string = convertFromHex(e_string[0])
         else:
-            e_string = generate_estring()
+            print("what should e_string file be called?")
+            filename = input("> ")
+            e_string = generate_estring(filename)
             e_string = convertFromHex(e_string)
 
         
         encrypt_key = list(e_string)
         
-        ciphertext = encrypt_message(message, e_string, encrypt_key, key)
+        ciphertext = encrypt_message(message, e_string, encrypt_key, key, filename)
 
         print("------------------------")
         print(ciphertext)
