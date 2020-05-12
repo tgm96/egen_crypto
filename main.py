@@ -4,7 +4,6 @@ import sys
 
 SYMBOLS = """ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!"*@^\\#%&/(')=+?-_.,< >:[]{;}"""
 
-
 while True:
     print("enter your mode here (encrypt/decrypt)")
     mode = input("> ")
@@ -73,51 +72,44 @@ def convertToHex(ciphertext):
 def convertFromHex(ciphertext):
     return bytearray.fromhex(ciphertext).decode()
 
-def adding(ciphertext, filename):
-    content = list(ciphertext)
-    content = [int(n) for n in content]
+def adding(ciphertext):
+    int_nums = [int(n) for n in ciphertext]
 
-    num_key = []
-
-    for i in content:
-        num_key.append(random.randint(0, i))
+    SHIFT = [7, 5, 3]
 
     ret_nums = []
-
-    for j in range(len(num_key)):
-        if content[j] + num_key[j] < 10:
-            num = content[j] + num_key[j]
-        else:
-            num = content[j] - num_key[j]
+    counter = 0
+    for num in int_nums:
+        num += SHIFT[counter]
+        if num >= 10:
+            num -= 10
+        ret_nums.append(num)
+        counter += 1
+        if counter >= 3:
+            counter = 0
     
-        ret_nums.append(str(num))
-
-    num_key = [str(a) for a in num_key]
-    num_key = "".join(num_key)
-
-    with open(filename + ".txt", "a") as f:
-        f.write("\n---------------------------")
-        f.write("\n" + num_key)
+    ret_nums = [str(n) for n in ret_nums]
 
     return "".join(ret_nums)
 
-def subtract(ciphertext, num_key):
-    content = list(ciphertext)
-    content = [int(n) for n in content]
+def subtracting(ciphertext):
+    cipher_nums = [int(n) for n in ciphertext]
 
-    ret_nums = []
+    SHIFT = [7, 5, 3]
+    plain_nums = []
+    counter = 0
+    for num in cipher_nums:
+        num -= SHIFT[counter]
+        if num < 0:
+            num += 10
+        plain_nums.append(num)
+        counter += 1
+        if counter >= 3:
+            counter = 0
 
-    for j in range(len(num_key)):
-        if (content[j] - num_key[j]) > 0:
-            num = content[j] - num_key[j]
-        else:
-            num = content[j] + num_key[j]
-    
-        ret_nums.append(str(num))
+    plain_nums = [str(n) for n in plain_nums]
 
-    #print("".join(ret_nums))
-    #sys.exit()
-    return "".join(ret_nums)
+    return "".join(plain_nums)
 
 def generate_estring(filename):
     L_symbols = list(SYMBOLS)
@@ -172,7 +164,7 @@ def encrypt_message(message, e_string, encrypt_key, key, filename):
     ret_string = convertToHex(ret_string)
     ret_string = transEncryptMessage(3, ret_string)
     ret_string = convertToHex(ret_string)
-    # ret_string = adding(ret_string, filename)
+    ret_string = adding(ret_string)
 
     print("your message has been encrypted and put in the file: ciphertext.txt")
     with open("ciphertext.txt", "w") as f:
@@ -185,15 +177,9 @@ def decrypt_message(key, message, filename):
     e_string = string_file.read()
     string_file.close()
 
-    e_string = e_string.split()
+    e_string = convertFromHex(e_string)
 
-    # num_key = e_string[-1]
-    # num_key = [int(n) for n in num_key]
-
-    # ret_nums = subtract(message, num_key)
-
-    e_string = convertFromHex(e_string[0])
-
+    message = subtracting(message)
     message = convertFromHex(message)
     message = transDecryptMessage(3, message)
     message = convertFromHex(message)
@@ -261,4 +247,3 @@ def main(mode, message, key):
 
 if __name__ == "__main__":
     main(myMode, myMessage, key)
-
