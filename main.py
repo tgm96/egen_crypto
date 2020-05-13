@@ -125,7 +125,6 @@ def generate_estring(filename):
         count -= 1
 
     e_string = "".join(encrypt_key)
-
     e_string = convertToHex(e_string)
 
     with open(filename + ".txt", "w") as f:
@@ -146,7 +145,6 @@ def encrypt_message(message, e_string, encrypt_key, key, filename):
     for let in message:
         if let in e_string:
             num = e_string.find(let)
-            
             num = num + key
 
             if num >= len(encrypt_key):
@@ -194,7 +192,6 @@ def decrypt_message(key, message, filename):
     for let in message:
         if let in e_string:
             num = e_string.find(let)
-            
             num = num - key
 
             if num >= len(e_string):
@@ -227,7 +224,6 @@ def main(mode, message, key):
             e_string = generate_estring(filename)
             e_string = convertFromHex(e_string)
 
-        
         encrypt_key = list(e_string)
         
         ciphertext = encrypt_message(message, e_string, encrypt_key, key, filename)
@@ -235,7 +231,6 @@ def main(mode, message, key):
         print("------------------------")
         print(ciphertext)
         print("------------------------")
-
 
     if mode == "decrypt":
         print("what is the filename of the e_string (excluding .txt)")
