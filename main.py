@@ -1,8 +1,14 @@
+#!/usr/bin/python3
+
 import random, math
-import sys
+import sys, os
 
+# next task is to implement this code to be a script. 
+# that means you can run it like this: "python3 main.py -e (for encrypt) -13 -text=/PATH/TO/TEXTFILE"
+# then it prompts for a key-file, and if none is present, making a new one.
+# same goes for decrypting
 
-SYMBOLS = """ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!"*@^\\#%&/(')=+?-_.,< >:[]{;}"""
+SYMBOLS = """ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!"*@^\\#%&/(')=+?-_.,< >:~[|]{;}\n"""
 
 while True:
     print("enter your mode here (encrypt/decrypt)")
@@ -21,8 +27,11 @@ while True:
         print("it has to be an integer")
 
 myMode = mode
-print("enter the plaintext or ciphertext here:")
+print("enter the filename of the plaintext or ciphertext here:")
 myMessage = input("> ")
+with open(myMessage, "r") as f:
+    myMessage = f.read()
+
 
 def transDecryptMessage(key, message):
 
@@ -138,7 +147,7 @@ def generate_estring(filename):
 
     return e_string
 
-def encrypt_message(message, e_string, encrypt_key, key, filename):
+def encrypt_message(message, e_string, e_string_list, key, filename):
 
     ret_string = ""
 
@@ -147,12 +156,12 @@ def encrypt_message(message, e_string, encrypt_key, key, filename):
             num = e_string.find(let)
             num = num + key
 
-            if num >= len(encrypt_key):
-                num -= len(encrypt_key)
+            if num >= len(e_string_list):
+                num -= len(e_string_list)
             elif num < 0:
-                num += len(encrypt_key)
+                num += len(e_string_list)
             
-            ret_string = ret_string + encrypt_key[num]
+            ret_string = ret_string + e_string_list[num]
 
     if key < len(ret_string) / 2:
         ret_string = transEncryptMessage(key, ret_string)
@@ -168,7 +177,7 @@ def encrypt_message(message, e_string, encrypt_key, key, filename):
     with open("ciphertext.txt", "w") as f:
         f.write(ret_string)
 
-    return "encrypted message: >" + ret_string + "<"
+    return ret_string
 
 def decrypt_message(key, message, filename):
     string_file = open(filename + ".txt", "r")
@@ -205,7 +214,7 @@ def decrypt_message(key, message, filename):
     with open("plaintext.txt", "w") as f:
         f.write(ret_string)
 
-    return ">" + ret_string + "<"
+    return ret_string
 
 def main(mode, message, key):
     if mode == "encrypt":
@@ -224,21 +233,21 @@ def main(mode, message, key):
             e_string = generate_estring(filename)
             e_string = convertFromHex(e_string)
 
-        encrypt_key = list(e_string)
+        e_string_list = list(e_string)
         
-        ciphertext = encrypt_message(message, e_string, encrypt_key, key, filename)
+        ciphertext = encrypt_message(message, e_string, e_string_list, key, filename)
 
-        print("------------------------")
+        print("------------MESSAGE------------")
         print(ciphertext)
-        print("------------------------")
+        print("------------MESSAGE------------")
 
     if mode == "decrypt":
         print("what is the filename of the e_string (excluding .txt)")
         filename = input("> ")
         plaintext = decrypt_message(key, message, filename)
-        print("------------------------")
+        print("------------MESSAGE------------")
         print(plaintext)
-        print("------------------------")
+        print("------------MESSAGE------------")
 
 if __name__ == "__main__":
     main(myMode, myMessage, key)
